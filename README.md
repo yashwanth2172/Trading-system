@@ -102,3 +102,6 @@ This is the most critical component of the system, acting as a final filter befo
 
 ---
 **Disclaimer:** This software is developed for educational and research purposes. Financial trading involves significant risk, and past performance is not indicative of future results.
+
+---
+*Developed by G Yashwanth*
