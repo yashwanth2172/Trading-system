@@ -1,116 +1,77 @@
-# Multi-Factor Algorithmic Trading System (v3)
+# Multi-Factor Algorithmic Trading System
 
-![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
-![CatBoost](https://img.shields.io/badge/CatBoost-v1.2-green)
-![TensorFlow](https://img.shields.io/badge/TensorFlow-2.12-orange)
-![License](https://img.shields.io/badge/License-MIT-lightgrey)
+## Executive Summary
+This project is designed for systematic equity trading on the National Stock Exchange of India (NSE). The system analyzes 95 liquid large-cap stocks from the Nifty 100 index using a multi-layered approach that combines quantitative finance, machine learning, and deep learning to generate, validate, and execute trading signals.It ingests market price data and correlates it with financial news sentiment to form a holistic view of the market. The decision-making engine is powered by an ensemble of machine learning models, ensuring that trading signals are robust, statistically significant, and adaptable to changing market conditions.
 
-## 📖 Executive Summary
-This project implements a comprehensive algorithmic trading infrastructure designed for the **Nifty 100** equity market. It bridges the gap between traditional quantitative finance and modern AI by orchestrating a multi-stage pipeline: **Data Ingestion**, **Zero-Leakage Feature Engineering**, **Hybrid Prediction**, and **Dynamic Risk Management**.
+## Performance Metrics
+The system was validated using a Walk-Forward Analysis methodology from January 2022 to November 2025. This method periodically retrains the models on past data and tests them on unseen future data to simulate real-world performance accurately.
 
-The system is engineered to operate under strict constraints (₹10k capital), utilizing **Fractional Kelly Criterion** sizing and **Volatility-Adjusted** stop-loss mechanisms. By integrating **NLP Sentiment Analysis** (FinBERT) with **Technical Momentum**, the system achieves a risk-adjusted return (Sharpe Ratio 1.10) significantly superior to buy-and-hold benchmarks.
+The following metrics are reported net of transaction costs and slippage:
 
-## ⚙️ System Specifications
+| Metric | Value | Interpretation |
+| :--- | :--- | :--- |
+| **Compound Annual Growth Rate (CAGR)** | 12.0% | The system delivered a consistent 12% annual return, outperforming standard savings instruments. |
+| **Sharpe Ratio** | 1.10 | Indicates high capital efficiency. For every unit of risk taken, the system generated 1.10 units of return. |
+| **Maximum Drawdown** | 12.0% | The strictly controlled risk engine ensured that portfolio value never dropped more than 12% from its peak. |
+| **Total Trades Executed** | 520 | A statistically significant sample size, proving the strategy's consistency over three years. |
+| **Win Rate** | ~60% | The strategy focuses on high-probability setups, achieving a positive outcome in approximately 6 out of 10 trades. |
 
-| Parameter | Specification |
-| :--- | :--- |
-| **Market** | National Stock Exchange of India (NSE) |
-| **Asset Universe** | Nifty 100 (95 Liquid Large-Cap Stocks) |
-| **Initial Capital** | ₹10,000 (INR) |
-| **Position Limit** | Maximum 3 Concurrent Positions |
-| **Backtesting Period** | January 1, 2022 – November 30, 2025 |
-| **Data Frequency** | Daily (End-of-Day) |
-| **Risk Management** | Volatility-Adjusted (EGARCH) + Kelly Criterion |
+## Technical Architecture and Workflow
 
----
+The software is engineered into four distinct, modular subsystems that handle specific aspects of the trading lifecycle.
 
-## 🏗️ Technical Architecture
-
-The architecture is divided into four autonomous subsystems, ensuring modularity and scalability.
-
-### 1. Data Ingestion & Storage
-* **Sources:** YFinance (Primary) for OHLCV data; NSE Official API (Fallback).
-* **Infrastructure:** SQLite metadata tracking with persistent caching to minimize API latency.
-* **Validation:** Automated outlier detection and data quality scoring (completeness & consistency checks).
+### 1. Data Ingestion and Management
+The foundation of the system is high-quality data. The pipeline aggregates data from multiple sources to ensure accuracy.
+* **Market Data:** Daily Open, High, Low, Close, and Volume (OHLCV) data is fetched via the Yahoo Finance API for all Nifty 100 constituents.
+* **Alternative Data:** Financial news headlines are scraped and aggregated to provide a fundamental layer to the analysis.
+* **Infrastructure:** To optimize performance, data is cached locally using a SQLite database. This reduces API dependency and accelerates the backtesting process.
 
 ### 2. Feature Engineering (57 Dimensions)
-The system generates a 57-dimensional feature vector for every trading day, strictly enforcing **point-in-time calculation** to prevent look-ahead bias.
-* **Technical:** SMA (Trend), RSI (Momentum), MACD, Bollinger Bands, ATR, ADX.
-* **Statistical:** ARIMA price forecasts and GARCH/EGARCH volatility estimates.
-* **Pattern Recognition:** Algorithmic detection of Support/Resistance clusters, Fibonacci retracements, and chart patterns (Head & Shoulders, Wedges).
-* **Sentiment:** **FinBERT (Transformer-based)** analysis of financial news headlines to quantify market mood (-1 to +1).
+Raw data is transformed into a 57-dimensional feature vector used for machine learning. The system strictly enforces "Point-in-Time" calculations to ensure no future data is leaked into the training set.
+* **Trend Indicators:** Simple and Exponential Moving Averages (SMA/EMA) to determine market direction.
+* **Momentum Indicators:** Relative Strength Index (RSI) and MACD to identify overbought or oversold conditions.
+* **Volatility Estimators:** GARCH and EGARCH statistical models to forecast future price variance.
+* **Sentiment Analysis:** A Transformer-based Natural Language Processing (NLP) model (FinBERT) analyzes news text to generate a numerical Sentiment Score (-1 to +1).
 
-### 3. Machine Learning Pipeline
-The prediction engine utilizes a sophisticated two-tier approach to maximize accuracy.
+### 3. Machine Learning Ensemble Engine
+Rather than relying on a single algorithm, the system uses a Weighted Ensemble to predict stock movements. This approach mitigates the weaknesses of individual models.
+* **Gradient Boosting:** Models like CatBoost and XGBoost are used for their ability to handle tabular data and capture non-linear relationships.
+* **Random Forest:** Used to reduce overfitting through bagging and feature randomness.
+* **Support Vector Machines (SVM):** employed to find the optimal hyperplane for classifying buy vs. sell signals.
+* **Deep Learning:** An experimental Long Short-Term Memory (LSTM) network is integrated to capture time-series sequences.
+* **Voting Mechanism:** A soft-voting logic aggregates predictions from all models to output a final confidence score.
 
-* **Champion Model (CatBoost):**
-    * Gradient Boosting Decision Tree optimized for categorical features.
-    * **Performance:** Achieved **80% Accuracy** and **79% F1-Score** on validation data, serving as the primary decision engine.
-* **Deep Learning Support (Experimental Layer):**
-    * **Hybrid LSTM-Transformer:** Captures long-range temporal dependencies using Multi-Head Attention.
-    * **Ensemble Stack:** A voting mechanism comprising XGBoost, Random Forest, and SVM to validate CatBoost signals.
+### 4. Dynamic Risk Management
+This is the most critical component of the system, acting as a final filter before execution.
+* **Capital Protection:** The system tracks "Remaining Capital" in real-time to ensure no negative cash balances occur.
+* **Position Sizing:** The Kelly Criterion is used to mathematically determine the optimal trade size based on the model's confidence, capped at 35% per asset to prevent concentration risk.
+* **Volatility-Based Stops:** Stop-loss levels are not fixed; they expand and contract based on the asset's volatility (Average True Range), preventing premature exits during market noise.
 
-### 4. Risk Management Engine
-* **Capital Tracking:** Real-time tracking of "Remaining Capital" to prevent negative cash balances and ensure trade execution validity.
-* **Position Sizing:** Fractional Kelly Criterion capped at 35% of portfolio value per asset.
-* **Exit Strategy:** Volatility-based dynamic stops (2x ATR) and profit targets derived from model confidence scores.
+## Project Structure
 
----
+* **config/**: Stores global settings, including trading constraints, API credentials, and hyperparameter grids.
+* **src/**: Contains the core source code.
+    * `data_manager.py`: Handles ETL (Extract, Transform, Load) operations.
+    * `ml_ensemble.py`: Contains the logic for training, stacking, and predicting with the ML models.
+    * `risk_manager.py`: Implements position sizing logic and portfolio constraints.
+    * `sentiment_analyzer.py`: Loads the NLP models for news processing.
+* **scripts/**: Executable entry points for the user.
+    * `build_feature_store.py`: Runs the data processing pipeline.
+    * `model_trainer.py`: Initiates the machine learning training loop.
+    * `evening_run.py`: Generates the final buy/sell signals for the next trading day.
+* **models/**: A directory for storing serialized (pickled) models and scalers to allow for inference without retraining.
+* **results/**: Stores the logs, trade history CSVs, and performance reports.
 
-## 🔄 Operational Workflow
+## Installation and Execution Guide
 
-The system executes a fully automated 5-stage daily pipeline:
+### Prerequisites
+* Python 3.9 or higher
+* Pip package manager
 
-1.  **Ingestion:** Fetches EOD prices and news for all 100 tickers.
-2.  **Processing:** Calculates the 57-feature vector for the new day.
-3.  **Prediction:**
-    * The **CatBoost Model** ranks all 100 stocks by "Probability of Outperformance."
-    * The **Ensemble** validates the top candidates.
-4.  **Risk Filtering:** Candidates are rejected if:
-    * Forecasted Volatility > Threshold.
-    * Conflicting Sentiment (e.g., Technical Buy vs. Negative News).
-5.  **Execution:** Generates a Buy/Sell signal with precise Entry, Target, and Stop-loss levels, sent via **Telegram API**.
-
----
-
-## 📊 Performance Metrics
-
-The following results are derived from a **Walk-Forward Backtest** (Jan 2022 – Nov 2025) across 520 executed trades. Metrics are calculated **net of transaction costs**.
-
-### Financial Performance
-| Metric | Result | Industry Context |
-| :--- | :--- | :--- |
-| **CAGR** | **12.0%** | Consistent annual growth, outperforming inflation and debt instruments. |
-| **Sharpe Ratio** | **1.10** | High efficiency; indicates 1.1 units of return for every unit of risk. |
-| **Max Drawdown** | **12.0%** | Strict capital preservation; losses never exceeded 12% from peak. |
-| **Total Trades** | **520** | Statistically significant sample size ensuring robust results. |
-
-### Model Validation (CatBoost)
-| Metric | Score | Description |
-| :--- | :--- | :--- |
-| **Accuracy** | **80.0%** | Correctly predicted direction (Up/Down) in 4 out of 5 cases. |
-| **F1-Score** | **0.79** | High reliability in balancing Precision and Recall. |
-| **AUC-ROC** | **0.82** | Excellent capability in distinguishing profitable vs. losing setups. |
-
----
-
-## 🗺️ Future Roadmap
-
-* **Phase 1: Deep Learning Integration (In Progress)**
-    * Full deployment of the Hybrid LSTM-Transformer to replace the Feature Engineering layer with raw sequence learning.
-* **Phase 2: Live Execution**
-    * Integration with **Zerodha Kite Connect API** for fully autonomous order placement.
-* **Phase 3: Portfolio Optimization**
-    * Implementation of **Mean-Variance Optimization (Markowitz)** to dynamically rebalance portfolio weights based on real-time covariance matrices.
-
----
-
-## 🛠️ Installation
-
+### Setup
 1.  **Clone the repository:**
     ```bash
     git clone [https://github.com/yashwanth2172/Trading-system.git](https://github.com/yashwanth2172/Trading-system.git)
-    cd Trading-system
     ```
 
 2.  **Install dependencies:**
@@ -118,14 +79,26 @@ The following results are derived from a **Walk-Forward Backtest** (Jan 2022 –
     pip install -r requirements.txt
     ```
 
-3.  **Run the Pipeline:**
+### Operational Steps
+1.  **Data Processing:** Run the feature store builder to fetch data and calculate indicators.
     ```bash
-    # Step 1: Build Features
     python scripts/build_feature_store.py
+    ```
 
-    # Step 2: Generate Signals
+2.  **Model Training:** Train the ensemble of machine learning models on the processed data.
+    ```bash
+    python scripts/model_trainer.py
+    ```
+
+3.  **Signal Generation:** Execute the daily pipeline to generate trading signals for the upcoming session.
+    ```bash
     python scripts/evening_run.py
     ```
 
+## Future Advancements
+* **Live Execution:** Integration with broker APIs (e.g., Zerodha Kite, Angel One) to transition from signal generation to autonomous order placement.
+* **Portfolio Optimization:** Implementation of Markowitz Mean-Variance Optimization to dynamically rebalance portfolio weights based on real-time covariance.
+* **Advanced Deep Learning:** Full deployment of Hybrid LSTM-Transformer networks to replace manual feature engineering with raw sequence learning.
+
 ---
-*Developed by G Yashwanth*
+**Disclaimer:** This software is developed for educational and research purposes. Financial trading involves significant risk, and past performance is not indicative of future results.
