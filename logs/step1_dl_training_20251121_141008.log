@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/Users/yashwanth/Desktop/institutional_trading_system_v3/scripts/sequence_model_trainer.py", line 28, in <module>
+    from src.technical_engine import TechnicalEngine
+  File "/Users/yashwanth/Desktop/institutional_trading_system_v3/src/technical_engine.py", line 7, in <module>
+    from config.settings import INDICATOR_PARAMS
+ImportError: cannot import name 'INDICATOR_PARAMS' from 'config.settings' (/Users/yashwanth/Desktop/institutional_trading_system_v3/config/settings.py)
