@@ -1,5 +1,6 @@
 # Multi-Factor Algorithmic Trading System
-
+![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
+![License](https://img.shields.io/badge/License-MIT-lightgrey)
 ## Executive Summary
 This project is designed for systematic equity trading on the National Stock Exchange of India (NSE). The system analyzes 95 liquid large-cap stocks from the Nifty 100 index using a multi-layered approach that combines quantitative finance, machine learning, and deep learning to generate, validate, and execute trading signals.It ingests market price data and correlates it with financial news sentiment to form a holistic view of the market. The decision-making engine is powered by an ensemble of machine learning models, ensuring that trading signals are robust, statistically significant, and adaptable to changing market conditions.
 
